@@ -1,8 +1,3 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
-
 import {
   createConnection,
   InitializeParams,
@@ -12,8 +7,6 @@ import {
   CompletionList,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-// import { getDocumentRegions } from "./embeddedSupport";
-// import { getLanguageService } from "vscode-html-languageservice";
 
 // Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
