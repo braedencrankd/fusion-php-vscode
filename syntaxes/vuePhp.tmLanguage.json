@@ -1,0 +1,84 @@
+{
+	"name": "Vue PHP",
+	"scopeName": "text.vue.php",
+	"injectionSelector": "L:source.vue",
+	"patterns": [
+		{
+			"include": "#php-tag"
+		}
+	],
+	"repository": {
+		"php-tag": {
+			"patterns": [
+				{
+					"begin": "(<)(php)(?=\\s|/?>)(?:(([^\"'>]|\"[^\"]*\"|'[^']*')*)(>))?",
+					"beginCaptures": {
+						"0": {
+							"name": "meta.tag.php.start.html"
+						},
+						"1": {
+							"name": "punctuation.definition.tag.begin.html"
+						},
+						"2": {
+							"name": "entity.name.tag.html"
+						},
+						"5": {
+							"name": "punctuation.definition.tag.end.html"
+						}
+					},
+					"end": "(?i)(</)(php)\\s*(>)",
+					"endCaptures": {
+						"0": {
+							"name": "meta.tag.php.end.html"
+						},
+						"1": {
+							"name": "punctuation.definition.tag.begin.html"
+						},
+						"2": {
+							"name": "entity.name.tag.html"
+						},
+						"3": {
+							"name": "punctuation.definition.tag.end.html"
+						}
+					},
+					"name": "meta.embedded.block.php",
+					"patterns": [
+						{
+							"begin": "(?<!>)\\G",
+							"end": ">",
+							"endCaptures": {
+								"0": {
+									"name": "punctuation.definition.tag.end.html"
+								}
+							},
+							"name": "meta.tag.php.start.html",
+							"patterns": [
+								{
+									"include": "#attribute"
+								}
+							]
+						},
+						{
+							"begin": "(?!\\G)",
+							"end": "(?=</php)",
+							"name": "source.php",
+							"patterns": [
+								{
+									"include": "source.php"
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		"attribute": {
+			"patterns": [
+				{
+					"match": "[a-zA-Z0-9:-]+",
+					"name": "entity.other.attribute-name.html"
+				}
+			]
+		}
+	}
+}
