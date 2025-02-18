@@ -1,8 +1,3 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
-
 import * as path from "path";
 import {
   workspace,
@@ -63,8 +58,6 @@ export function activate(context: ExtensionContext) {
 
         // Get the PHP content and create virtual document
         const phpContent = document.getText(); // You'll want to extract just the PHP content
-
-        console.log("PHP CONTENT", phpContent);
 
         virtualDocumentContents.set(originalUri, phpContent);
 

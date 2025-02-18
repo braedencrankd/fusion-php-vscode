@@ -29,7 +29,7 @@ connection.onInitialize((_params: InitializeParams) => {
       textDocumentSync: TextDocumentSyncKind.Full,
       // We'll handle completions through request forwarding
       completionProvider: {
-        resolveProvider: true,
+        resolveProvider: false,
         triggerCharacters: ["$", ">", ":", "<"],
       },
     },
@@ -83,6 +83,11 @@ connection.onCompletion(async (textDocumentPosition, _token) => {
 
   // Handle non-PHP completions (Vue template completions, etc)
   return CompletionList.create([]);
+});
+
+// Add completion resolve handler
+connection.onCompletionResolve((item) => {
+  return item;
 });
 
 // Listen for document changes
