@@ -57,7 +57,8 @@ export function activate(context: ExtensionContext) {
         const originalUri = document.uri.toString(true);
 
         // Get the PHP content and create virtual document
-        const phpContent = document.getText(); // You'll want to extract just the PHP content
+        const content = document.getText();
+        const phpContent = content.split("<php>")[1].split("</php>")[0]; // Retrieve the PHP content
 
         virtualDocumentContents.set(originalUri, phpContent);
 
