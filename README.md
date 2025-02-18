@@ -2,6 +2,9 @@
 
 ![Fusion PHP](https://raw.githubusercontent.com/fusion-php/fusion/refs/heads/main/art/logo-dark.png)
 
+![fusion-php-vscode](https://github.com/user-attachments/assets/04441fce-0251-4a3b-8c56-66eacf7bb79e)
+
+
 A Visual Studio Code extension that provides syntax highlighting for PHP code within Vue files using custom `<php>` tags.
 
 See [Fusion PHP](https://github.com/braedencrankd/fusion-php) repository for more information.
