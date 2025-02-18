@@ -14,7 +14,7 @@ _Please note that this is a work in progress and is not yet ready for production
 
 ## Features
 
-- Syntax highlighting for PHP code enclosed in `<php>` tags within Vue files
+- Syntax highlighting and Intellisense for PHP code enclosed in `<php>` tags within Vue files
 - Preserves standard Vue template syntax highlighting
 
 ## Installation
@@ -39,3 +39,7 @@ From the Extensions view in VS Code:
 ## Usage
 
 The extension automatically activates for files with the `.vue` extension. PHP code should be wrapped in `<php>` tags:
+
+## Recommended Extensions
+- [PHP Intelliphense](https://marketplace.visualstudio.com/items?itemName=bmewburn.vscode-intelephense-client)
+- [Vue Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
