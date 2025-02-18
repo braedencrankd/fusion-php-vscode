@@ -9,14 +9,17 @@ import {
   LanguageService,
   TokenType,
   Range,
-} from "./languageModes";
+} from "vscode-html-languageservice";
+import { TextDocument as LSPTextDocument } from "vscode-languageserver-textdocument";
 
-export interface LanguageRange extends Range {
+export interface LanguageRange {
+  start: Position;
+  end: Position;
   languageId: string | undefined;
 }
 
 export interface HTMLDocumentRegions {
-  getEmbeddedDocument(languageId: string): TextDocument;
+  getEmbeddedDocument(languageId: string): LSPTextDocument;
   getLanguageRanges(range: Range): LanguageRange[];
   getLanguageAtPosition(position: Position): string | undefined;
   getLanguagesInDocument(): string[];
@@ -121,7 +124,7 @@ function getLanguagesInDocument(
 }
 
 function getLanguageAtPosition(
-  document: TextDocument,
+  document: LSPTextDocument,
   regions: EmbeddedRegion[],
   position: Position
 ): string {
@@ -152,7 +155,7 @@ function getEmbeddedDocument(
   }
   result += content.substring(currentPos);
 
-  return TextDocument.create(
+  return LSPTextDocument.create(
     document.uri,
     languageId,
     document.version,

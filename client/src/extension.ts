@@ -4,8 +4,13 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from "path";
-import { ExtensionContext } from "vscode";
-
+import {
+  workspace,
+  ExtensionContext,
+  Uri,
+  commands,
+  CompletionList,
+} from "vscode";
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -16,35 +21,68 @@ import {
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-  // The server is implemented in node
   const serverModule = context.asAbsolutePath(
     path.join("server", "out", "server.js")
   );
-  // If the extension is launched in debug mode then the debug server options are used
-  // Otherwise the run options are used
+
   const serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.ipc },
-    debug: {
-      module: serverModule,
-      transport: TransportKind.ipc,
-    },
+    debug: { module: serverModule, transport: TransportKind.ipc },
   };
 
-  // Options to control the language client
+  // Track virtual documents for PHP content
+  const virtualDocumentContents = new Map<string, string>();
+
+  // Register virtual document provider
+  workspace.registerTextDocumentContentProvider("embedded-content", {
+    provideTextDocumentContent: (uri) => {
+      const originalUri = uri.path.slice(1).slice(0, -4);
+      const decodedUri = decodeURIComponent(originalUri);
+      return virtualDocumentContents.get(decodedUri);
+    },
+  });
+
   const clientOptions: LanguageClientOptions = {
-    // Register the server for plain text documents
     documentSelector: [{ scheme: "file", language: "vue" }],
-    initializationOptions: {
-      phpLanguageServer: {
-        capabilities: {
-          completionProvider: true,
-          // Add other PHP language server capabilities
-        },
+    middleware: {
+      provideCompletionItem: async (
+        document,
+        position,
+        context,
+        token,
+        next
+      ) => {
+        // If the server returns null, it means we're in a PHP region
+        const result = await next(document, position, context, token);
+        if (result) {
+          return result;
+        }
+
+        // Handle PHP completion through request forwarding
+        const originalUri = document.uri.toString(true);
+
+        // Get the PHP content and create virtual document
+        const phpContent = document.getText(); // You'll want to extract just the PHP content
+
+        console.log("PHP CONTENT", phpContent);
+
+        virtualDocumentContents.set(originalUri, phpContent);
+
+        const vdocUriString = `embedded-content://php/${encodeURIComponent(
+          originalUri
+        )}.php`;
+        const vdocUri = Uri.parse(vdocUriString);
+
+        return await commands.executeCommand<CompletionList>(
+          "vscode.executeCompletionItemProvider",
+          vdocUri,
+          position,
+          context.triggerCharacter
+        );
       },
     },
   };
 
-  // Create the language client and start the client.
   client = new LanguageClient(
     "vuePhpLanguageServer",
     "Vue PHP Language Server",
@@ -52,7 +90,6 @@ export function activate(context: ExtensionContext) {
     clientOptions
   );
 
-  // Start the client. This will also launch the server
   client.start();
 }
 

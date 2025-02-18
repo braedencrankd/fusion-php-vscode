@@ -9,104 +9,84 @@ import {
   ProposedFeatures,
   TextDocuments,
   TextDocumentSyncKind,
-  RequestType,
-  Position,
-} from "vscode-languageserver";
+  CompletionList,
+} from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { getDocumentRegions } from "./embeddedSupport";
-import { getLanguageService } from "vscode-html-languageservice";
+// import { getDocumentRegions } from "./embeddedSupport";
+// import { getLanguageService } from "vscode-html-languageservice";
 
-// Create a connection for the server. The connection uses Node's IPC as a transport.
-// Also include all preview / proposed LSP features.
+// Create a connection for the server
 const connection = createConnection(ProposedFeatures.all);
 
-// Create a simple text document manager. The text document manager
-// supports full document sync only
+// Create a simple text document manager
 const documents = new TextDocuments(TextDocument);
 
-const htmlLanguageService = getLanguageService();
+// const htmlLanguageService = getLanguageService();
 
-// Add this type for PHP language server capabilities
-interface PHPLanguageServer {
-  capabilities: {
-    completionProvider?: boolean;
-    // Add other capabilities as needed
-  };
-}
-
-let phpLanguageServer: PHPLanguageServer | undefined;
-
-connection.onInitialize((params: InitializeParams) => {
-  // Check if PHP language server is available in the client capabilities
-  const phpServer = params.initializationOptions?.phpLanguageServer;
-  if (phpServer) {
-    phpLanguageServer = phpServer;
-  }
-
+connection.onInitialize((_params: InitializeParams) => {
   return {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Full,
-      // Tell the client that the server supports code completion
+      // We'll handle completions through request forwarding
       completionProvider: {
-        resolveProvider: false,
+        resolveProvider: true,
+        triggerCharacters: ["$", ">", ":", "<"],
       },
     },
   };
 });
 
-connection.onDidChangeConfiguration((_change) => {
-  // Revalidate all open text documents
-  documents.all().forEach(validateTextDocument);
-});
-
-// The content of a text document has changed. This event is emitted
-// when the text document first opened or when its content has changed.
-documents.onDidChangeContent((change) => {
-  validateTextDocument(change.document);
-});
-
-async function validateTextDocument(textDocument: TextDocument) {
-  try {
-    console.log("validateTextDocument", textDocument);
-  } catch (e) {
-    connection.console.error(`Error while validating ${textDocument.uri}`);
-    connection.console.error(String(e));
-  }
-}
-
-// Helper function to check if position is in PHP region
-function isInPHPRegion(document: TextDocument, position: Position): boolean {
-  const regions = getDocumentRegions(htmlLanguageService, document);
-  const languageId = regions.getLanguageAtPosition(position);
-  console.log("languageId", languageId);
-  return languageId === "php";
-}
-
-// Modify the completion handler to forward PHP requests
-connection.onCompletion(async (textDocumentPosition, token) => {
+connection.onCompletion(async (textDocumentPosition, _token) => {
   const document = documents.get(textDocumentPosition.textDocument.uri);
   if (!document) {
     return null;
   }
 
-  if (isInPHPRegion(document, textDocumentPosition.position)) {
-    if (phpLanguageServer?.capabilities.completionProvider) {
-      // Forward the request to PHP language server
-      return await connection.sendRequest(
-        new RequestType("textDocument/completion"),
-        textDocumentPosition,
-        token
-      );
+  // Get document regions to determine if we're in a PHP section
+  const documentText = document.getText();
+  const phpStartMatch = /<php>/gi;
+  const phpEndMatch = /<\/php>/gi;
+
+  const phpRanges = [];
+  let startMatch;
+  let endMatch;
+
+  while ((startMatch = phpStartMatch.exec(documentText)) !== null) {
+    endMatch = phpEndMatch.exec(documentText);
+    if (endMatch) {
+      const startPos = document.positionAt(startMatch.index + 5); // +5 to skip <php>
+      const endPos = document.positionAt(endMatch.index);
+      phpRanges.push({
+        start: startPos,
+        end: endPos,
+        languageId: "php",
+      });
     }
   }
 
-  // Handle non-PHP completions here
-  return null;
+  // Check if the position is within a PHP region
+  const position = textDocumentPosition.position;
+  const isInPhp = phpRanges.some((range) => {
+    return (
+      (position.line > range.start.line ||
+        (position.line === range.start.line &&
+          position.character >= range.start.character)) &&
+      (position.line < range.end.line ||
+        (position.line === range.end.line &&
+          position.character <= range.end.character))
+    );
+  });
+
+  if (isInPhp) {
+    return null;
+  }
+
+  // Handle non-PHP completions (Vue template completions, etc)
+  return CompletionList.create([]);
 });
 
-// Make the text document manager listen on the connection
-// for open, change and close text document events
+// Listen for document changes
 documents.listen(connection);
 
-// Listen on the connection
+// Start the server
 connection.listen();
